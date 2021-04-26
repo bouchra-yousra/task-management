@@ -5,32 +5,24 @@ const router = express.Router();
 const auth = require("../middleware/auth");
 
 //utils
-const taskModule = require("../logic/task");
+const categoryModule = require("../logic/category");
 
 router.get("/", auth, async (req, res) => {
   try {
     const owner = req.user?.id;
+    const { space } = req?.body;
 
-    const { category } = req?.body;
+    let category = await categoryModule.get(space, owner);
 
-    if ([undefined, null].includes(category)) {
-      throw {
-        statusCode: 400,
-        body: "Category is missing",
-      };
-    }
-
-    let tasks = await taskModule.get(category, owner);
-
-    if (tasks?.length == 0) {
+    if (category?.length == 0) {
       throw {
         statusCode: 204,
-        body: "No tasks",
+        body: "No category",
       };
     }
-    // Send 200 - notes
+    // Send 200 - categorys
     res.status(200).json({
-      tasks,
+      category,
     });
   } catch (err) {
     console.error(err);
@@ -53,7 +45,7 @@ router.post("/", auth, async (req, res) => {
 
     const owner = req?.user?.id;
 
-    const { error } = verifyTask(req.body);
+    const { error } = verifyCategory(req.body);
     if (error) {
       throw {
         statusCode: 400,
@@ -61,18 +53,17 @@ router.post("/", auth, async (req, res) => {
       };
     }
 
-    const { value, category, deadLine } = req.body;
+    const { title, space } = req.body;
 
-    const Task = await taskModule.create({
-      value,
-      category,
-      deadLine,
+    const category = await categoryModule.create({
+      title,
+      space,
       owner,
     });
 
     res.status(201).json({
       message: "created successfuly",
-      id: Task["_id"],
+      id: category["_id"],
     });
   } catch (err) {
     console.error(err);
@@ -95,7 +86,7 @@ router.put("/", auth, async (req, res) => {
 
     const owner = req?.user?.id;
 
-    const { error } = verifyExistingTask(req.body);
+    const { error } = verifyExistingCategory(req.body);
     if (error) {
       throw {
         statusCode: 400,
@@ -103,27 +94,25 @@ router.put("/", auth, async (req, res) => {
       };
     }
 
-    const { id, value, category, deadLine, isDone } = req.body;
+    const { id, title, space } = req.body;
 
-    const Task = await taskModule.find(id, owner);
+    const category = await categoryModule.find(id, owner);
 
-    if (!Task) {
+    if (!category) {
       throw {
         statusCode: 400,
-        body: "Task not found",
+        body: "category not found",
       };
     }
 
-    await taskModule.update(id, {
-      value,
-      category,
-      deadLine,
-      isDone,
+    await categoryModule.update(id, {
+      title,
+      space,
     });
 
     res.status(200).json({
       message: "updated successfuly",
-      id: Task["_id"],
+      id: category["_id"],
     });
   } catch (err) {
     console.error(err);
@@ -156,16 +145,16 @@ router.delete("/", auth, async (req, res) => {
       };
     }
 
-    const Task = await taskModule.find(id, owner);
+    const category = await categoryModule.find(id, owner);
 
-    if (!Task) {
+    if (!category) {
       throw {
         statusCode: 400,
-        body: "Task not found",
+        body: "category not found",
       };
     }
 
-    await taskModule.delete(id);
+    await categoryModule.delete(id);
 
     res.status(200).json({
       message: "deleted successfuly",
@@ -181,21 +170,19 @@ router.delete("/", auth, async (req, res) => {
   }
 });
 
-function verifyTask(data) {
+function verifyCategory(data) {
   const schema = Joi.object({
-    value: Joi.string().required(),
-    category: Joi.string().required(),
-    deadLine: Joi.date().required(),
+    title: Joi.string().required(),
+    space: Joi.string().required(),
   });
 
   return schema.validate(data);
 }
-function verifyExistingTask(data) {
+function verifyExistingCategory(data) {
   const schema = Joi.object({
     id: Joi.string().required(),
-    value: Joi.string().required(),
-    category: Joi.string().required(),
-    deadLine: Joi.date().required(),
+    title: Joi.string().required(),
+    space: Joi.string().required(),
   });
 
   return schema.validate(data);

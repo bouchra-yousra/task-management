@@ -5,32 +5,23 @@ const router = express.Router();
 const auth = require("../middleware/auth");
 
 //utils
-const taskModule = require("../logic/task");
+const spaceModule = require("../logic/space");
 
 router.get("/", auth, async (req, res) => {
   try {
     const owner = req.user?.id;
 
-    const { category } = req?.body;
+    let space = await spaceModule.get(owner);
 
-    if ([undefined, null].includes(category)) {
-      throw {
-        statusCode: 400,
-        body: "Category is missing",
-      };
-    }
-
-    let tasks = await taskModule.get(category, owner);
-
-    if (tasks?.length == 0) {
+    if (space?.length == 0) {
       throw {
         statusCode: 204,
-        body: "No tasks",
+        body: "No space",
       };
     }
-    // Send 200 - notes
+    // Send 200 - spaces
     res.status(200).json({
-      tasks,
+      space,
     });
   } catch (err) {
     console.error(err);
@@ -53,7 +44,7 @@ router.post("/", auth, async (req, res) => {
 
     const owner = req?.user?.id;
 
-    const { error } = verifyTask(req.body);
+    const { error } = verifySpace(req.body);
     if (error) {
       throw {
         statusCode: 400,
@@ -61,18 +52,17 @@ router.post("/", auth, async (req, res) => {
       };
     }
 
-    const { value, category, deadLine } = req.body;
+    const { title, color } = req.body;
 
-    const Task = await taskModule.create({
-      value,
-      category,
-      deadLine,
+    const Space = await spaceModule.create({
+      title,
+      color,
       owner,
     });
 
     res.status(201).json({
       message: "created successfuly",
-      id: Task["_id"],
+      id: Space["_id"],
     });
   } catch (err) {
     console.error(err);
@@ -95,7 +85,7 @@ router.put("/", auth, async (req, res) => {
 
     const owner = req?.user?.id;
 
-    const { error } = verifyExistingTask(req.body);
+    const { error } = verifyExistingSpace(req.body);
     if (error) {
       throw {
         statusCode: 400,
@@ -103,27 +93,25 @@ router.put("/", auth, async (req, res) => {
       };
     }
 
-    const { id, value, category, deadLine, isDone } = req.body;
+    const { id, title, color } = req.body;
 
-    const Task = await taskModule.find(id, owner);
+    const Space = await spaceModule.find(id, owner);
 
-    if (!Task) {
+    if (!Space) {
       throw {
         statusCode: 400,
-        body: "Task not found",
+        body: "Space not found",
       };
     }
 
-    await taskModule.update(id, {
-      value,
-      category,
-      deadLine,
-      isDone,
+    await spaceModule.update(id, {
+      title,
+      color,
     });
 
     res.status(200).json({
       message: "updated successfuly",
-      id: Task["_id"],
+      id: Space["_id"],
     });
   } catch (err) {
     console.error(err);
@@ -156,16 +144,16 @@ router.delete("/", auth, async (req, res) => {
       };
     }
 
-    const Task = await taskModule.find(id, owner);
+    const Space = await spaceModule.find(id, owner);
 
-    if (!Task) {
+    if (!Space) {
       throw {
         statusCode: 400,
-        body: "Task not found",
+        body: "Space not found",
       };
     }
 
-    await taskModule.delete(id);
+    await spaceModule.delete(id);
 
     res.status(200).json({
       message: "deleted successfuly",
@@ -181,21 +169,19 @@ router.delete("/", auth, async (req, res) => {
   }
 });
 
-function verifyTask(data) {
+function verifySpace(data) {
   const schema = Joi.object({
-    value: Joi.string().required(),
-    category: Joi.string().required(),
-    deadLine: Joi.date().required(),
+    title: Joi.string().required(),
+    color: Joi.string().required(),
   });
 
   return schema.validate(data);
 }
-function verifyExistingTask(data) {
+function verifyExistingSpace(data) {
   const schema = Joi.object({
     id: Joi.string().required(),
-    value: Joi.string().required(),
-    category: Joi.string().required(),
-    deadLine: Joi.date().required(),
+    title: Joi.string().required(),
+    color: Joi.string().required(),
   });
 
   return schema.validate(data);

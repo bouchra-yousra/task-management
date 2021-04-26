@@ -200,9 +200,11 @@ router.post("/signup", async (req, res) => {
         body: error.details[0].message,
       };
     }
-
+    console.log("before finding");
     // checking to see if a user with the same email exists
     const data = req.body;
+
+    console.log("finding nemo");
 
     let user = await userModule.find(data.email);
 
@@ -268,7 +270,6 @@ router.post("/login", async (req, res) => {
 
     // checking that the user exists, and if the same password was provided
     const { email, password } = req.body;
-
     let user = await userModule.find(email);
     if (!user) {
       throw {

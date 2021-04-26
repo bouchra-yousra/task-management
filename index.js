@@ -15,6 +15,8 @@ var path = require("path");
 // ROUTES
 const user = require("./src/routes/user");
 const task = require("./src/routes/task");
+const category = require("./src/routes/category");
+const space = require("./src/routes/space");
 
 //Swagger
 const swaggerJSDoc = require("swagger-jsdoc");
@@ -64,6 +66,8 @@ app.use(cors());
 app.use("/v1/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use("/v1/user", user);
 app.use("/v1/tasks", task);
+app.use("/v1/categories", category);
+app.use("/v1/spaces", space);
 
 app.get("/v1/", (req, res) => {
   // res.send(
