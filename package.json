@@ -12,7 +12,7 @@
     "api",
     "express"
   ],
-  "author": "Belkacem Berras",
+  "author": "Afoun Yousra Bouchra",
   "license": "ISC",
   "dependencies": {
     "bcryptjs": "^2.4.3",
