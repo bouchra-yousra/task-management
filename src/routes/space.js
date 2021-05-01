@@ -34,6 +34,43 @@ router.get("/", auth, async (req, res) => {
   }
 });
 
+router.get("/:id", auth, async (req, res) => {
+  try {
+    const owner = req?.user?.id;
+    const { id: space } = req?.params;
+
+    const { error } = verifyId({ id: space });
+    if (error) {
+      throw {
+        statusCode: 400,
+        body: error.details[0].message,
+      };
+    }
+    const Space = await spaceModule.find(space, owner);
+
+    if (!Space) {
+      throw {
+        statusCode: 400,
+        body: "Space not found",
+      };
+    }
+
+    let categories = (await categoryModule.get(space, owner)) ?? [];
+
+    res.status(200).json({
+      ...Space["_doc"],
+      categories,
+    });
+  } catch (err) {
+    console.error(err);
+    if (err.statusCode) {
+      res.status(err.statusCode).json({
+        message: err.body,
+      });
+    }
+  }
+});
+
 router.post("/", auth, async (req, res) => {
   try {
     if (req.body.constructor === Object && Object.keys(req.body).length === 0) {
