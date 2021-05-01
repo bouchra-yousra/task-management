@@ -7,41 +7,6 @@ const auth = require("../middleware/auth");
 //utils
 const taskModule = require("../logic/task");
 
-router.get("/", auth, async (req, res) => {
-  try {
-    const owner = req.user?.id;
-
-    const { category } = req?.body;
-
-    if ([undefined, null].includes(category)) {
-      throw {
-        statusCode: 400,
-        body: "Category is missing",
-      };
-    }
-
-    let tasks = await taskModule.get(category, owner);
-
-    if (tasks?.length == 0) {
-      throw {
-        statusCode: 204,
-        body: "No tasks",
-      };
-    }
-    // Send 200 - tasks
-    res.status(200).json({
-      tasks,
-    });
-  } catch (err) {
-    console.error(err);
-    if (err.statusCode) {
-      res.status(err.statusCode).json({
-        message: err.body,
-      });
-    }
-  }
-});
-
 router.post("/", auth, async (req, res) => {
   try {
     if (req.body.constructor === Object && Object.keys(req.body).length === 0) {
@@ -84,7 +49,7 @@ router.post("/", auth, async (req, res) => {
   }
 });
 
-router.put("/", auth, async (req, res) => {
+router.put("/:id", auth, async (req, res) => {
   try {
     if (req.body.constructor === Object && Object.keys(req.body).length === 0) {
       throw {
@@ -94,16 +59,16 @@ router.put("/", auth, async (req, res) => {
     }
 
     const owner = req?.user?.id;
+    const { id } = req?.params;
 
-    const { error } = verifyExistingTask(req.body);
+    const { error } = verifyExistingTask({ ...req.body, id });
     if (error) {
       throw {
         statusCode: 400,
         body: error.details[0].message,
       };
     }
-
-    const { id, value, category, deadLine, isDone } = req.body;
+    const { value, category, deadLine, isDone } = req.body;
 
     const Task = await taskModule.find(id, owner);
 
@@ -135,16 +100,9 @@ router.put("/", auth, async (req, res) => {
   }
 });
 
-router.delete("/", auth, async (req, res) => {
+router.delete("/:id", auth, async (req, res) => {
   try {
-    if (req.body.constructor === Object && Object.keys(req.body).length === 0) {
-      throw {
-        statusCode: 400,
-        body: "Empty request!",
-      };
-    }
-
-    const { id } = req.body;
+    const { id } = req?.params;
     const owner = req?.user?.id;
     const { error } = verifyId({
       id,
@@ -190,6 +148,7 @@ function verifyTask(data) {
 
   return schema.validate(data);
 }
+
 function verifyExistingTask(data) {
   const schema = Joi.object({
     id: Joi.string().required(),
