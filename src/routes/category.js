@@ -30,8 +30,11 @@ router.get("/:id", auth, async (req, res) => {
       };
     }
 
+    let tasks = await taskModule.get(id, owner);
+
     res.status(200).json({
       ...category["_doc"],
+      tasks,
     });
   } catch (err) {
     console.error(err);
