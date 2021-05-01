@@ -7,6 +7,41 @@ const auth = require("../middleware/auth");
 //utils
 const taskModule = require("../logic/task");
 
+router.get("/:id", auth, async (req, res) => {
+  try {
+    const owner = req?.user?.id;
+    const { id } = req?.params;
+
+    const { error } = verifyId({ id });
+    if (error) {
+      throw {
+        statusCode: 400,
+        body: error.details[0].message,
+      };
+    }
+
+    const Task = await taskModule.find(id, owner);
+
+    if (!Task) {
+      throw {
+        statusCode: 400,
+        body: "Task not found",
+      };
+    }
+
+    res.status(200).json({
+      ...Task["_doc"],
+    });
+  } catch (err) {
+    console.error(err);
+    if (err.statusCode) {
+      res.status(err.statusCode).json({
+        message: err.body,
+      });
+    }
+  }
+});
+
 router.post("/", auth, async (req, res) => {
   try {
     if (req.body.constructor === Object && Object.keys(req.body).length === 0) {
