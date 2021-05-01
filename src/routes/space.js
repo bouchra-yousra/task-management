@@ -74,7 +74,7 @@ router.post("/", auth, async (req, res) => {
   }
 });
 
-router.put("/", auth, async (req, res) => {
+router.put("/:id", auth, async (req, res) => {
   try {
     if (req.body.constructor === Object && Object.keys(req.body).length === 0) {
       throw {
@@ -84,8 +84,9 @@ router.put("/", auth, async (req, res) => {
     }
 
     const owner = req?.user?.id;
+    const { id } = req?.params;
 
-    const { error } = verifyExistingSpace(req.body);
+    const { error } = verifyExistingSpace({ ...req.body, id });
     if (error) {
       throw {
         statusCode: 400,
@@ -93,7 +94,7 @@ router.put("/", auth, async (req, res) => {
       };
     }
 
-    const { id, title, color } = req.body;
+    const { title, color } = req.body;
 
     const Space = await spaceModule.find(id, owner);
 
@@ -123,16 +124,9 @@ router.put("/", auth, async (req, res) => {
   }
 });
 
-router.delete("/", auth, async (req, res) => {
+router.delete(":id/", auth, async (req, res) => {
   try {
-    if (req.body.constructor === Object && Object.keys(req.body).length === 0) {
-      throw {
-        statusCode: 400,
-        body: "Empty request!",
-      };
-    }
-
-    const { id } = req.body;
+    const { id } = req?.params;
     const owner = req?.user?.id;
     const { error } = verifyId({
       id,
