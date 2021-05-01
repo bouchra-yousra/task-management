@@ -13,10 +13,10 @@ const InitiateMongoServer = require("./src/utils/db");
 var path = require("path");
 
 // ROUTES
-const user = require("./src/routes/user");
-const task = require("./src/routes/task");
-const category = require("./src/routes/category");
-const space = require("./src/routes/space");
+const user = require("./src/v1/routes/user");
+const task = require("./src/v1/routes/task");
+const category = require("./src/v1/routes/category");
+const space = require("./src/v1/routes/space");
 
 //Swagger
 const swaggerJSDoc = require("swagger-jsdoc");
