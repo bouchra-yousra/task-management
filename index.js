@@ -28,7 +28,7 @@ const swaggerDefinition = {
     title: "Express API for Task_Management",
     version: "1.2.0",
     description:
-      "This is a REST API application made with Express. It is the backend behind noteet, which allows user to create note in an easy way.",
+      "This is a REST API application made with Express. It is the backend behind task management, which allows user to create tasks in an easy and organised way.",
     license: {
       name: "Licensed Under MIT",
       url: "https://spdx.org/licenses/MIT.html",
@@ -70,9 +70,6 @@ app.use("/v1/categories", category);
 app.use("/v1/spaces", space);
 
 app.get("/v1/", (req, res) => {
-  // res.send(
-  //   "welcome to the express boilerplate provided by your friendly neighberhood belkacember"
-  // );
   res.sendFile(path.join(__dirname + "/src/static/index.html"));
 });
 

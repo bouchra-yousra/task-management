@@ -28,7 +28,7 @@ router.get("/", auth, async (req, res) => {
         body: "No tasks",
       };
     }
-    // Send 200 - notes
+    // Send 200 - tasks
     res.status(200).json({
       tasks,
     });
