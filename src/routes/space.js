@@ -6,6 +6,7 @@ const auth = require("../middleware/auth");
 
 //utils
 const spaceModule = require("../logic/space");
+const categoryModule = require("../logic/category");
 
 router.get("/", auth, async (req, res) => {
   try {
@@ -152,6 +153,33 @@ router.delete(":id/", auth, async (req, res) => {
     res.status(200).json({
       message: "deleted successfuly",
       id,
+    });
+  } catch (err) {
+    console.error(err);
+    if (err.statusCode) {
+      res.status(err.statusCode).json({
+        message: err.body,
+      });
+    }
+  }
+});
+
+router.get("/:id/categories", auth, async (req, res) => {
+  try {
+    const owner = req.user?.id;
+    const { id: space } = req?.params;
+
+    let category = await categoryModule.get(space, owner);
+
+    if (category?.length == 0) {
+      throw {
+        statusCode: 204,
+        body: "No category",
+      };
+    }
+    // Send 200 - categorys
+    res.status(200).json({
+      category,
     });
   } catch (err) {
     console.error(err);

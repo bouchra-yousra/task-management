@@ -8,33 +8,6 @@ const auth = require("../middleware/auth");
 const categoryModule = require("../logic/category");
 const taskModule = require("../logic/task");
 
-router.get("/", auth, async (req, res) => {
-  try {
-    const owner = req.user?.id;
-    const { space } = req?.body;
-
-    let category = await categoryModule.get(space, owner);
-
-    if (category?.length == 0) {
-      throw {
-        statusCode: 204,
-        body: "No category",
-      };
-    }
-    // Send 200 - categorys
-    res.status(200).json({
-      category,
-    });
-  } catch (err) {
-    console.error(err);
-    if (err.statusCode) {
-      res.status(err.statusCode).json({
-        message: err.body,
-      });
-    }
-  }
-});
-
 router.post("/", auth, async (req, res) => {
   try {
     if (req.body.constructor === Object && Object.keys(req.body).length === 0) {
