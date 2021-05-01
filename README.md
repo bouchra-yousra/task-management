@@ -1,6 +1,6 @@
-# Noteet's backend
+# task management's backend
 
-<h4> Backend for noteet app :information_desk_person: , made with expressjs </h4>
+<h4> Backend for task management app :information_desk_person: , made with expressjs </h4>
 
 ## how to use
 
