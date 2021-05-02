@@ -5,24 +5,32 @@ const router = express.Router();
 const auth = require("../middleware/auth");
 
 //utils
-const categoryModule = require("../logic/category");
+const taskModule = require("../logic/task");
 
-router.get("/", auth, async (req, res) => {
+router.get("/:id", auth, async (req, res) => {
   try {
-    const owner = req.user?.id;
-    const { space } = req?.body;
+    const owner = req?.user?.id;
+    const { id } = req?.params;
 
-    let category = await categoryModule.get(space, owner);
-
-    if (category?.length == 0) {
+    const { error } = verifyId({ id });
+    if (error) {
       throw {
-        statusCode: 204,
-        body: "No category",
+        statusCode: 400,
+        body: error.details[0].message,
       };
     }
-    // Send 200 - categorys
+
+    const Task = await taskModule.find(id, owner);
+
+    if (!Task) {
+      throw {
+        statusCode: 400,
+        body: "Task not found",
+      };
+    }
+
     res.status(200).json({
-      category,
+      ...Task["_doc"],
     });
   } catch (err) {
     console.error(err);
@@ -45,7 +53,7 @@ router.post("/", auth, async (req, res) => {
 
     const owner = req?.user?.id;
 
-    const { error } = verifyCategory(req.body);
+    const { error } = verifyTask(req.body);
     if (error) {
       throw {
         statusCode: 400,
@@ -53,17 +61,18 @@ router.post("/", auth, async (req, res) => {
       };
     }
 
-    const { title, space } = req.body;
+    const { value, category, deadLine } = req.body;
 
-    const category = await categoryModule.create({
-      title,
-      space,
+    const Task = await taskModule.create({
+      value,
+      category,
+      deadLine,
       owner,
     });
 
     res.status(201).json({
       message: "created successfuly",
-      id: category["_id"],
+      id: Task["_id"],
     });
   } catch (err) {
     console.error(err);
@@ -75,7 +84,7 @@ router.post("/", auth, async (req, res) => {
   }
 });
 
-router.put("/", auth, async (req, res) => {
+router.put("/:id", auth, async (req, res) => {
   try {
     if (req.body.constructor === Object && Object.keys(req.body).length === 0) {
       throw {
@@ -85,34 +94,36 @@ router.put("/", auth, async (req, res) => {
     }
 
     const owner = req?.user?.id;
+    const { id } = req?.params;
 
-    const { error } = verifyExistingCategory(req.body);
+    const { error } = verifyExistingTask({ ...req.body, id });
     if (error) {
       throw {
         statusCode: 400,
         body: error.details[0].message,
       };
     }
+    const { value, category, deadLine, isDone } = req.body;
 
-    const { id, title, space } = req.body;
+    const Task = await taskModule.find(id, owner);
 
-    const category = await categoryModule.find(id, owner);
-
-    if (!category) {
+    if (!Task) {
       throw {
         statusCode: 400,
-        body: "category not found",
+        body: "Task not found",
       };
     }
 
-    await categoryModule.update(id, {
-      title,
-      space,
+    await taskModule.update(id, {
+      value,
+      category,
+      deadLine,
+      isDone,
     });
 
     res.status(200).json({
       message: "updated successfuly",
-      id: category["_id"],
+      id: Task["_id"],
     });
   } catch (err) {
     console.error(err);
@@ -124,16 +135,9 @@ router.put("/", auth, async (req, res) => {
   }
 });
 
-router.delete("/", auth, async (req, res) => {
+router.delete("/:id", auth, async (req, res) => {
   try {
-    if (req.body.constructor === Object && Object.keys(req.body).length === 0) {
-      throw {
-        statusCode: 400,
-        body: "Empty request!",
-      };
-    }
-
-    const { id } = req.body;
+    const { id } = req?.params;
     const owner = req?.user?.id;
     const { error } = verifyId({
       id,
@@ -145,16 +149,16 @@ router.delete("/", auth, async (req, res) => {
       };
     }
 
-    const category = await categoryModule.find(id, owner);
+    const Task = await taskModule.find(id, owner);
 
-    if (!category) {
+    if (!Task) {
       throw {
         statusCode: 400,
-        body: "category not found",
+        body: "Task not found",
       };
     }
 
-    await categoryModule.delete(id);
+    await taskModule.delete(id);
 
     res.status(200).json({
       message: "deleted successfuly",
@@ -170,19 +174,22 @@ router.delete("/", auth, async (req, res) => {
   }
 });
 
-function verifyCategory(data) {
+function verifyTask(data) {
   const schema = Joi.object({
-    title: Joi.string().required(),
-    space: Joi.string().required(),
+    value: Joi.string().required(),
+    category: Joi.string().required(),
+    deadLine: Joi.date().required(),
   });
 
   return schema.validate(data);
 }
-function verifyExistingCategory(data) {
+
+function verifyExistingTask(data) {
   const schema = Joi.object({
     id: Joi.string().required(),
-    title: Joi.string().required(),
-    space: Joi.string().required(),
+    value: Joi.string().required(),
+    category: Joi.string().required(),
+    deadLine: Joi.date().required(),
   });
 
   return schema.validate(data);

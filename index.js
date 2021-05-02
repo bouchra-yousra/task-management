@@ -13,10 +13,10 @@ const InitiateMongoServer = require("./src/utils/db");
 var path = require("path");
 
 // ROUTES
-const user = require("./src/routes/user");
-const task = require("./src/routes/task");
-const category = require("./src/routes/category");
-const space = require("./src/routes/space");
+const user = require("./src/v1/routes/user");
+const task = require("./src/v1/routes/task");
+const category = require("./src/v1/routes/category");
+const space = require("./src/v1/routes/space");
 
 //Swagger
 const swaggerJSDoc = require("swagger-jsdoc");
@@ -28,7 +28,7 @@ const swaggerDefinition = {
     title: "Express API for Task_Management",
     version: "1.2.0",
     description:
-      "This is a REST API application made with Express. It is the backend behind task management, which allows user to create note in an easy way.",
+      "This is a REST API application made with Express. It is the backend behind task management, which allows user to create tasks in an easy and organised way.",
     license: {
       name: "Licensed Under MIT",
       url: "https://spdx.org/licenses/MIT.html",
@@ -70,9 +70,6 @@ app.use("/v1/categories", category);
 app.use("/v1/spaces", space);
 
 app.get("/v1/", (req, res) => {
-  // res.send(
-  //   "welcome to the express boilerplate provided by your friendly neighberhood yousra bouchraber"
-  // );
   res.sendFile(path.join(__dirname + "/src/static/index.html"));
 });
 

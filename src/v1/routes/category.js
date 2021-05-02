@@ -5,23 +5,36 @@ const router = express.Router();
 const auth = require("../middleware/auth");
 
 //utils
-const spaceModule = require("../logic/space");
+const categoryModule = require("../logic/category");
+const taskModule = require("../logic/task");
 
-router.get("/", auth, async (req, res) => {
+router.get("/:id", auth, async (req, res) => {
   try {
-    const owner = req.user?.id;
+    const owner = req?.user?.id;
+    const { id } = req?.params;
 
-    let space = await spaceModule.get(owner);
-
-    if (space?.length == 0) {
+    const { error } = verifyId({ id });
+    if (error) {
       throw {
-        statusCode: 204,
-        body: "No space",
+        statusCode: 400,
+        body: error.details[0].message,
       };
     }
-    // Send 200 - spaces
+
+    const category = await categoryModule.find(id, owner);
+
+    if (!category) {
+      throw {
+        statusCode: 400,
+        body: "category not found",
+      };
+    }
+
+    let tasks = await taskModule.get(id, owner);
+
     res.status(200).json({
-      space,
+      ...category["_doc"],
+      tasks,
     });
   } catch (err) {
     console.error(err);
@@ -44,7 +57,7 @@ router.post("/", auth, async (req, res) => {
 
     const owner = req?.user?.id;
 
-    const { error } = verifySpace(req.body);
+    const { error } = verifyCategory(req.body);
     if (error) {
       throw {
         statusCode: 400,
@@ -52,17 +65,17 @@ router.post("/", auth, async (req, res) => {
       };
     }
 
-    const { title, color } = req.body;
+    const { title, space } = req.body;
 
-    const Space = await spaceModule.create({
+    const category = await categoryModule.create({
       title,
-      color,
+      space,
       owner,
     });
 
     res.status(201).json({
       message: "created successfuly",
-      id: Space["_id"],
+      id: category["_id"],
     });
   } catch (err) {
     console.error(err);
@@ -74,7 +87,7 @@ router.post("/", auth, async (req, res) => {
   }
 });
 
-router.put("/", auth, async (req, res) => {
+router.put("/:id", auth, async (req, res) => {
   try {
     if (req.body.constructor === Object && Object.keys(req.body).length === 0) {
       throw {
@@ -84,8 +97,9 @@ router.put("/", auth, async (req, res) => {
     }
 
     const owner = req?.user?.id;
+    const { id } = req?.params;
 
-    const { error } = verifyExistingSpace(req.body);
+    const { error } = verifyExistingCategory({ ...req.body, id });
     if (error) {
       throw {
         statusCode: 400,
@@ -93,25 +107,25 @@ router.put("/", auth, async (req, res) => {
       };
     }
 
-    const { id, title, color } = req.body;
+    const { title, space } = req.body;
 
-    const Space = await spaceModule.find(id, owner);
+    const category = await categoryModule.find(id, owner);
 
-    if (!Space) {
+    if (!category) {
       throw {
         statusCode: 400,
-        body: "Space not found",
+        body: "category not found",
       };
     }
 
-    await spaceModule.update(id, {
+    await categoryModule.update(id, {
       title,
-      color,
+      space,
     });
 
     res.status(200).json({
       message: "updated successfuly",
-      id: Space["_id"],
+      id: category["_id"],
     });
   } catch (err) {
     console.error(err);
@@ -123,16 +137,9 @@ router.put("/", auth, async (req, res) => {
   }
 });
 
-router.delete("/", auth, async (req, res) => {
+router.delete("/:id", auth, async (req, res) => {
   try {
-    if (req.body.constructor === Object && Object.keys(req.body).length === 0) {
-      throw {
-        statusCode: 400,
-        body: "Empty request!",
-      };
-    }
-
-    const { id } = req.body;
+    const { id } = req?.params;
     const owner = req?.user?.id;
     const { error } = verifyId({
       id,
@@ -144,16 +151,16 @@ router.delete("/", auth, async (req, res) => {
       };
     }
 
-    const Space = await spaceModule.find(id, owner);
+    const category = await categoryModule.find(id, owner);
 
-    if (!Space) {
+    if (!category) {
       throw {
         statusCode: 400,
-        body: "Space not found",
+        body: "category not found",
       };
     }
 
-    await spaceModule.delete(id);
+    await categoryModule.delete(id);
 
     res.status(200).json({
       message: "deleted successfuly",
@@ -169,19 +176,54 @@ router.delete("/", auth, async (req, res) => {
   }
 });
 
-function verifySpace(data) {
+router.get("/:id/tasks", auth, async (req, res) => {
+  try {
+    const owner = req.user?.id;
+
+    const { id: category } = req?.params;
+
+    if ([undefined, null].includes(category)) {
+      throw {
+        statusCode: 400,
+        body: "Category is missing",
+      };
+    }
+
+    let tasks = await taskModule.get(category, owner);
+
+    if (tasks?.length == 0) {
+      throw {
+        statusCode: 204,
+        body: "No tasks",
+      };
+    }
+    // Send 200 - tasks
+    res.status(200).json({
+      tasks,
+    });
+  } catch (err) {
+    console.error(err);
+    if (err.statusCode) {
+      res.status(err.statusCode).json({
+        message: err.body,
+      });
+    }
+  }
+});
+
+function verifyCategory(data) {
   const schema = Joi.object({
     title: Joi.string().required(),
-    color: Joi.string().required(),
+    space: Joi.string().required(),
   });
 
   return schema.validate(data);
 }
-function verifyExistingSpace(data) {
+function verifyExistingCategory(data) {
   const schema = Joi.object({
     id: Joi.string().required(),
     title: Joi.string().required(),
-    color: Joi.string().required(),
+    space: Joi.string().required(),
   });
 
   return schema.validate(data);

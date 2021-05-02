@@ -19,15 +19,15 @@ const auth = require("../middleware/auth");
  *         email:
  *           type: string
  *           description: The user's email.
- *           example: me@yousra bouchraber.com
+ *           example: me@bouchra-yousra.com
  *         firstName:
  *           type: string
  *           description: The user's first name.
- *           example: yousra bouchra
+ *           example: Yousra
  *         lastName:
  *           type: string
  *           description: the user's last name.
- *           example : afoun
+ *           example : Afoun
  *         password:
  *           type: string
  *           description: the user's password.
@@ -38,7 +38,7 @@ const auth = require("../middleware/auth");
  *         email:
  *           type: string
  *           description: The user's email.
- *           example: me@yousra bouchraber.com
+ *           example: me@bouchra-yousra.com
  *         password:
  *           type: string
  *           description: the user's password.
@@ -70,19 +70,19 @@ const auth = require("../middleware/auth");
  *                   email:
  *                     type: string
  *                     description: The user's email.
- *                     example: me@yousra bouchraber.com
+ *                     example: me@bouchra-yousra.com
  *                   firstName:
  *                     type: string
  *                     description: The user's first name.
- *                     example: yousra bouchra
+ *                     example: Yousra
  *                   lastName:
  *                     type: string
  *                     description: the user's last name.
- *                     example : afoun
+ *                     example : Afoun
  *                   username:
  *                     type: string
  *                     description: the user's username.
- *                     example: kacemws
+ *                     example: bouchra-yousra
  *   /v1/user/signup/:
  *     post:
  *       summary: Signup a user in the system.
